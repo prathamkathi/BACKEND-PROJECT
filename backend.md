@@ -109,32 +109,41 @@ git status
 
 ## middlewares
 
-// YET TO DO
-
 JAANE SE PEHELE MUJHSE MILTE JANA
 
-can do either of three:
+can do either of these:
 
 1. end the req–res cycle by sending a 'response'
 2. pass control to the next middleware/route using 'next()'
 3. trigger the error-handling middleware using 'next(err)'
 
-notes:
+note:
 
 - MW can access req object too
 - MW run even if routes don't exist, since they are written before the routes
 
 ```js
-// custom middlware
-app.use("/route", (req, res, next) => {
+// CUSTOM MIDDLEWARE
+app.use("/random", (req, res, next) => {
   console.log("middleware is in action");
 
   // res.send("mw response");
   // next();
-  // return next(); // can do this too
+
+  const err = new Error("kuch to gadbad");
+  next(err);
+
+  // return next(); // can do this too, just to specify end of the block
 });
 
-// error handling middleware
+// ERROR HANDLING MIDDLEWARE
+app.use("/random", (err, req, res, next) => {
+  // try to resolve the err
+  if (resolved)
+    return next(); // call next non-error handling middleware
+  else return next(err);
+  // pass it to next error handling middleware OR trigger express default error handling middleware
+});
 ```
 
 ```js
@@ -260,23 +269,23 @@ const userSchema = new mongoose.Schema(
 // PASSWORD ENCRYPTION & VALIDATION
 
 // using mongoose 'pre' hook (middleware); pre: do this before saving
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   // we want 'this', DON'T USE ARROW FUNC
 
-  // we want to do this when saving for the first time, so use conditional
-  if (!this.isModified("password")) return next(); // if object is not modified
+  // only hash when password field is modified
+  if (!this.isModified("password")) return;
+  // hash the password
   this.password = await bcrypt.hash(this.password, 10); // hash(what, #rounds)
-  next();
 });
 
-// custom methods
-userSchema.methods.isPassword = async function (password) {
+// CUSTOM METHODS FOR SCHEMA
+userSchema.methods.isPasswordCorrect = async function (password) {
   // we want 'this', DON'T USE ARROW FUNC
 
   // bcrypt can check password as well
-  return await bcrypt.compare(password, this.password);
-  // returns Boolean
+  return await bcrypt.compare(password, this.password); // returns Boolean
 };
+
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
@@ -308,6 +317,8 @@ export const User = mongoose.model("User", userSchema);
 ```
 
 ```js
+// src/models/todo.model.js
+
 const todoSchema = new mongoose.Schema(
   {
     content: { type: String, required: true },
@@ -326,52 +337,8 @@ const todoSchema = new mongoose.Schema(
       },
     ], // array of sub-todos
   },
-  { timestamps: true } // always put this critical schemas
+  { timestamps: true } // always put this in critical schemas
 );
-```
-
-```js
-import mongoose from "mongoose";
-
-// mini model
-const orderItemSchema = new mongoose.Schema({
-  productId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Product",
-  },
-  quantity: {
-    type: Number,
-    required: true,
-  },
-});
-
-const orderSchema = new mongoose.Schema(
-  {
-    orderPrice: {
-      type: Number,
-      required: true,
-    },
-    customer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-    orderItems: {
-      type: [orderItemSchema], // notice
-    },
-    address: {
-      type: String,
-      required: true,
-    },
-    status: {
-      type: String,
-      enum: ["PENDING", "CANCELLED", "DELIVERED"], // enumerations/choices
-      default: "PENDING",
-    },
-  },
-  { timestamps: true }
-);
-
-export const Order = mongoose.model("Order", orderSchema);
 ```
 
 ## aggregation pipeline
@@ -392,6 +359,7 @@ export const Video = mongoose.model("Video", videoSchema);
 
 ```js
 // src/db/index.js
+
 import mongoose from "mongoose";
 import { DB_NAME } from "../constants.js";
 
@@ -412,14 +380,17 @@ export default connectDB;
 
 ```js
 // src/index.js
-import dotenv from "dotenv";
+
+import dotenv from "dotenv"; // to be done in this file only
 import connectDB from "./db/index.js";
 import { app } from "./app.js";
 
-dotenv.config();
+dotenv.config(); // to be done in this file only
 
-connectDB()
+connectDB() // async function returns a Promise
   .then(() => {
+    // START THE SERVER HERE ITSELF, RIGHT AFTER DB CONNECTION
+
     const port = process.env.PORT || 8000;
     app.listen(port, () => {
       console.log(`App is listening on port ${port}!`);
@@ -432,6 +403,8 @@ connectDB()
 ```
 
 ## multer file upload
+
+LEARN MORE ABOUT MULTER AND HOW TO CONFIG. IT MORE
 
 ```js
 // src/middlewares/multer.middleware.js

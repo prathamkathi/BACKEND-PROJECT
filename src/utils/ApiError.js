@@ -10,11 +10,11 @@ export class ApiError extends Error {
     // create & set values
     this.statusCode = statusCode;
     this.data = null;
-    // this.message = message; // not needed because super() already sets the message
     this.success = false;
     this.errors = errors;
+    // this.message = message; // not needed because super() already sets the message
 
-    // *capture stack trace
+    // * capture stack trace
     if (stack) {
       this.stack = stack;
     } else {

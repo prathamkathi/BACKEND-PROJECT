@@ -40,10 +40,11 @@ const userSchema = new Schema(
       },
     ],
     password: {
-      type: String, // encryption reqd
+      type: String, // hash before saving
       required: [true, "password is required"],
     },
     refreshToken: {
+      // this token is used to generate new access tokens without requiring the user to log in again
       type: String,
     },
   },
@@ -58,19 +59,18 @@ userSchema.pre("save", async function () {
 
   // only hash when password field is modified
   if (!this.isModified("password")) return;
-
   // hash the password
   this.password = await bcrypt.hash(this.password, 10); // hash(what, #rounds)
 });
 
-// custom methods
+// CUSTOM METHODS FOR SCHEMA
 userSchema.methods.isPasswordCorrect = async function (password) {
   // we want 'this', DON'T USE ARROW FUNC
 
   // bcrypt can check password as well
-  return await bcrypt.compare(password, this.password);
-  // returns Boolean
+  return await bcrypt.compare(password, this.password); // returns Boolean
 };
+
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {

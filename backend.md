@@ -108,7 +108,7 @@ git commit -m 'commit all files'
 git status
 
 git branch -M main
-git remote add origin git@github.com:prathamkathi/git-test.git
+git remote add origin git@github.com:prathamkathi/repo_name.git
 git push -u origin main
 
 ## middlewares

@@ -5,8 +5,11 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 // generate AT & RT
-const generateAccessAndRefreshTokens = asyncHandler(async (userId) => {
+const generateAccessAndRefreshTokens = async (userId) => {
   const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "user not found while generating tokens");
+  }
   const accessToken = user.generateAccessToken();
   const refreshToken = user.generateRefreshToken();
 
@@ -16,7 +19,7 @@ const generateAccessAndRefreshTokens = asyncHandler(async (userId) => {
   await user.save({ validateBeforeSave: false });
 
   return { accessToken, refreshToken };
-});
+};
 
 export const registerUser = asyncHandler(async (req, res) => {
   // console.log("FILES >>>", req.files);
@@ -131,7 +134,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   if (!isPasswordValid) throw new ApiError(401, "invalid user credentials");
 
   // 5.
-  const { accessToken, refreshToken } = generateAccessAndRefreshTokens(
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
     user._id
   );
 

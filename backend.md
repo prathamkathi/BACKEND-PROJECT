@@ -94,14 +94,6 @@ git init
 touch .gitignore
 touch public/temp/.gitkeep (for empty folder structures)
 
-```js
-// .gitignore
-node_modules/
-.env
-
-// gitignore generators
-```
-
 git add .
 git commit -m 'commit all files'
 
@@ -626,7 +618,7 @@ npm i cloudinary multer
 </details>
 
 <details>
-<summary><strong>.prettieignore</strong></summary>
+<summary><strong>.prettierignore</strong></summary>
 
 ```
 /.vscode
@@ -644,7 +636,7 @@ npm i cloudinary multer
 <summary><strong>.env</strong></summary>
 
 ```
-PORT=8000
+PORT=3000
 MONGODB_URI=mongodb+srv://prathamkathi:prathamkathi@cluster0.l5vofkz.mongodb.net # mongo atlas
 CORS_ORIGIN=* # accept all origins
 
@@ -654,7 +646,7 @@ REFRESH_TOKEN_SECRET=CJ0X0-5aMdDNtowD9cvØoVIg9GG_0Gzh9zMocy03UtN1kBfLRn3Dmkx08M
 REFRESH_TOKEN_EXPIRY=10d # expiry more than access token secret
 
 # cloudinary
-CLOUD_NAME=dnse1yvqq
+CLOUDINARY_CLOUD_NAME=dnse1yvqq
 CLOUDINARY_API_KEY=213764595352274
 CLOUDINARY_API_SECRET=C18PmbpFIjvCOmbvIsHXTgs3Yt0
 CLOUDINARY_URL=cloudinary://213764595352274:C18PmbpFIjvCOmbvIsHXTgs3Yt0@dnse1yvqq

@@ -49,6 +49,8 @@ app.listen(port, () => console.log("server listening on port: ", port)); // list
 
 ## dotenv
 
+HAVE TO RESTART SERVER EVEN IF USING NODEMON
+
 .env file stores environment variables, sensitive information, invisible to public
 
 npm i dotenv
@@ -97,11 +99,13 @@ touch public/temp/.gitkeep (for empty folder structures)
 git add .
 git commit -m 'commit all files'
 
-git status
-
 git branch -M main
 git remote add origin git@github.com:prathamkathi/repo_name.git
 git push -u origin main
+
+git push –> when origin is set
+
+git status
 
 ## middlewares
 

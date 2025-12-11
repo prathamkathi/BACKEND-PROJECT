@@ -169,9 +169,10 @@ export const loginUser = asyncHandler(async (req, res) => {
 
 export const logoutUser = asyncHandler(async (req, res) => {
   // clear cookies
-  // clear refresh token & access token
+  // reset refresh token from user document
 
-  // how to access user, no info –> use custom middleware
+  // User.findById(user._id)
+  // how to access user, no info –> use auth middleware
 
   const user = await User.findByIdAndUpdate(
     req.user._id,
@@ -181,7 +182,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
       }, // $set operator is used to update the value of a field
     },
     {
-      new: true, // returns the updated document
+      new: true, // returns the updated document, not the pre-updated one
     }
   );
 

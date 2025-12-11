@@ -25,10 +25,10 @@ userRouter.route("/register").post(
   registerUser
 );
 
-// http:localhost:3000/api/v1/users/login
 userRouter.route("/login").post(loginUser);
+// http:localhost:3000/api/v1/users/login
 
-// secured routes
+// SECURED ROUTES
 userRouter.route("/logout").post(verifyJWT, logoutUser); // post method is used, and not get
 // http:localhost:3000/api/v1/users/logout
 

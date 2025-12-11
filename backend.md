@@ -646,9 +646,7 @@ export const registerUser = asyncHandler(async (req, res) => {
       )
     );
 });
-```
 
-```js
 export const loginUser = asyncHandler(async (req, res) => {
   // 1. take necessary login details from user (frontend); username & password
   // 2. username or email exist?
@@ -706,6 +704,65 @@ export const loginUser = asyncHandler(async (req, res) => {
         "user logged in successfully"
       )
     );
+});
+
+export const logoutUser = asyncHandler(async (req, res) => {
+  // clear cookies
+  // reset refresh token from user document
+
+  // User.findById(user._id)
+  // how to access user, no info –> use auth middleware
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: undefined,
+      }, // $set operator is used to update the value of a field
+    },
+    {
+      new: true, // returns the updated document, not the pre-updated one
+    }
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "user logged out"));
+});
+```
+
+```js
+// src/middlewares/auth.middleware.js
+
+export const verifyJWT = asyncHandler(async (req, _, next) => {
+  // extract token
+  const token =
+    req.cookies?.accessToken ||
+    req.header("Authorization")?.replace("Bearer ", "");
+
+  if (!token) throw new ApiError(401, "unauthorized request");
+
+  const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+  const user = await User.findById(decodedToken?._id).select(
+    "-password -refreshToken"
+  );
+
+  if (!user) {
+    // todo: see about frontend
+    throw new ApiError(401, "invalid access token");
+  }
+
+  req.user = user;
+
+  next();
 });
 ```
 

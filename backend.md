@@ -139,7 +139,7 @@ app.use("/random", (req, res, next) => {
 // ERROR HANDLING MIDDLEWARE
 app.use("/random", (err, req, res, next) => {
   // try to resolve the err
-  if (resolved)
+  if (resolved the err)
     return next(); // call next non-error handling middleware
   else return next(err);
   // pass it to next error handling middleware OR trigger express default error handling middleware
@@ -149,7 +149,13 @@ app.use("/random", (err, req, res, next) => {
 ```js
 // src/app.js
 
-// third-party middleware
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+
+const app = express();
+
+// MIDDLEWARES
 app.use(
   cors({
     // ALLOWS ALL CROSS-ORIGIN REQUESTS
@@ -157,14 +163,18 @@ app.use(
     credentials: true, // client (browser) ko cookies / auth tokens bhejne ki permission dena
   })
 );
-
-// express middlewares
 app.use(express.json({ limit: "16kb" })); // JSON body ko parse karke req.body banata hai
 app.use(express.urlencoded({ extended: true, limit: "16kb" })); // form-data (URL encoded) ko parse karke req.body banata hai
 app.use(express.static("public")); // public folder ke files direct serve karta hai (images, etc)
-
-// third-party middleware
 app.use(cookieParser()); // incoming cookies ko read karke req.cookies banata hai
+
+// ROUTES IMPORT
+import userRouter from "./routes/user.route.js";
+
+// ROUTES DECLARATION
+app.use("/api/v1/users", userRouter);
+// http:localhost:3000/api/v1/users
+export { app };
 ```
 
 IMP: (req, res) –> (err, req, res, next)
@@ -538,6 +548,165 @@ export class ApiResponse {
     this.success = statusCode < 400;
   }
 }
+```
+
+## routing
+
+```js
+import { Router } from "express";
+import {
+  loginUser,
+  logoutUser,
+  registerUser,
+} from "../controllers/user.controller.js";
+import { upload } from "../middlewares/multer.middleware.js";
+import { verifyJWT } from "../middlewares/auth.middlware.js";
+
+const userRouter = Router();
+
+// http:localhost:3000/api/v1/users/register
+userRouter.route("/register").post(
+  // middleware here
+  upload.fields([
+    {
+      name: "avatar",
+      maxCount: 1,
+    },
+    {
+      name: "coverImage",
+      maxCount: 1,
+    },
+  ]),
+  registerUser
+);
+
+// http:localhost:3000/api/v1/users/login
+userRouter.route("/login").post(loginUser);
+
+// secured routes
+userRouter.route("/logout").post(verifyJWT, logoutUser); // post method is used, and not get
+// http:localhost:3000/api/v1/users/logout
+
+export default userRouter;
+```
+
+## authentication & authorization
+
+```js
+// src/controllers/user.controller.js
+
+// generate AT & RT – no need for async wrapper, it's not a web request
+export const generateAccessAndRefreshTokens = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "user not found while generating tokens");
+  }
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
+
+  // user.accessToken = accessToken; // not needed
+  user.refreshToken = refreshToken;
+
+  await user.save({ validateBeforeSave: false });
+
+  return { accessToken, refreshToken };
+};
+
+export const registerUser = asyncHandler(async (req, res) => {
+  // console.log("FILES >>>", req.files);
+  // console.log("BODY >>>", req.body);
+
+  //
+  // ALGORITHM
+
+  // 1. get user details from frontend
+  // 2. validation checks for fields – like not empty
+  // 3. check if user already exists – username, email
+  // 4. check for image(s) - avatar image (reqd), cover image (optional)
+  // 5. upload them to cloudinary and get the url of avatar (at least)
+  // 6. create user object - create entry into db
+  // 7. check for user creation, return response or throw error otherwise
+  // 8. from response (to be sent to user), remove sensitive data - password and token
+
+  // ...check it out from backend project file
+  res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        // data
+        {
+          user: loggedInUser,
+          accessToken, // good practice to send this too
+          refreshToken, // good practice to send this too
+        },
+        "user logged in successfully"
+      )
+    );
+});
+```
+
+```js
+export const loginUser = asyncHandler(async (req, res) => {
+  // 1. take necessary login details from user (frontend); username & password
+  // 2. username or email exist?
+  // 3. find user in db
+  // 4. user exists, check password
+  // 5. generated AT & RT (access & refresh)
+  // 6. send these tokens as secure cookies as response
+
+  // 1.
+  const { username, email, password } = req.body;
+
+  // 2.
+  if (!username && !email)
+    // if neither is available
+    throw new ApiError(400, "username or email is required");
+
+  // 3.
+  const user = await User.findOne({
+    // find via either, whatever finds it first
+    $or: [{ username }, { email }],
+  });
+  if (!user) throw new ApiError(404, "user does not exist");
+
+  // 4.
+  const isPasswordValid = await user.isPasswordCorrect(password); // Boolean
+  if (!isPasswordValid) throw new ApiError(401, "invalid user credentials");
+
+  // 5.
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+
+  // 6.
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  ); // remove unwanted fields before sending the document
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        // data
+        {
+          user: loggedInUser,
+          accessToken, // good practice to send this too
+          refreshToken, // good practice to send this too
+        },
+        "user logged in successfully"
+      )
+    );
+});
 ```
 
 # Project Setup

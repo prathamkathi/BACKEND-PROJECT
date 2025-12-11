@@ -21,6 +21,6 @@ app.use(cookieParser()); // incoming cookies ko read karke req.cookies banata ha
 import userRouter from "./routes/user.route.js";
 
 // ROUTES DECLARATION
-app.use("/api/v1/users", userRouter);
-// http:localhost:3000/api/v1/users/register
+app.use("/api/v1/users", userRouter); // http:localhost:3000/api/v1/users/
+
 export { app };

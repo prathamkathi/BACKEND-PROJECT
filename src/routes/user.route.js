@@ -25,9 +25,11 @@ userRouter.route("/register").post(
   registerUser
 );
 
+// http:localhost:3000/api/v1/users/login
 userRouter.route("/login").post(loginUser);
 
 // secured routes
 userRouter.route("/logout").post(verifyJWT, logoutUser); // post method is used, and not get
+// http:localhost:3000/api/v1/users/logout
 
 export default userRouter;

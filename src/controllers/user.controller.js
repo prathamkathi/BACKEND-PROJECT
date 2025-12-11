@@ -4,19 +4,19 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-// generate AT & RT
-const generateAccessAndRefreshTokens = async (userId) => {
+// generate AT & RT – no need for async wrapper, it's not a web request
+export const generateAccessAndRefreshTokens = async (userId) => {
   const user = await User.findById(userId);
-  if (!user) {
-    throw new ApiError(404, "user not found while generating tokens");
-  }
+
+  if (!user) throw new ApiError(404, "user not found while generating tokens");
+
   const accessToken = user.generateAccessToken();
   const refreshToken = user.generateRefreshToken();
 
   // user.accessToken = accessToken; // not needed
   user.refreshToken = refreshToken;
 
-  await user.save({ validateBeforeSave: false });
+  await user.save({ validateBeforeSave: false }); // don't run all validations for this 'save'
 
   return { accessToken, refreshToken };
 };
@@ -121,16 +121,18 @@ export const loginUser = asyncHandler(async (req, res) => {
 
   // 2.
   if (!username && !email)
+    // if neither is available
     throw new ApiError(400, "username or email is required");
 
   // 3.
   const user = await User.findOne({
+    // find via either, whatever finds it first
     $or: [{ username }, { email }],
   });
   if (!user) throw new ApiError(404, "user does not exist");
 
   // 4.
-  const isPasswordValid = await user.isPasswordCorrect(password);
+  const isPasswordValid = await user.isPasswordCorrect(password); // Boolean
   if (!isPasswordValid) throw new ApiError(401, "invalid user credentials");
 
   // 5.
@@ -141,7 +143,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   // 6.
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken"
-  );
+  ); // remove unwanted fields before sending the document
   const options = {
     httpOnly: true,
     secure: true,

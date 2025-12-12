@@ -68,7 +68,8 @@ userSchema.methods.isPasswordCorrect = async function (password) {
   // we want 'this', DON'T USE ARROW FUNC
 
   // bcrypt can check password as well
-  return await bcrypt.compare(password, this.password); // returns Boolean
+  return await bcrypt.compare(password, this.password);
+  // returns Boolean
 };
 
 userSchema.methods.generateAccessToken = function () {

@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 // generate AT & RT – no need for async wrapper, it's not a web request
 export const generateAccessAndRefreshTokens = async (userId) => {
@@ -196,4 +197,56 @@ export const logoutUser = asyncHandler(async (req, res) => {
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "user logged out"));
+});
+
+export const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+
+  if (!incomingRefreshToken) throw new ApiError(401, "unauthorized request");
+
+  let decodedToken;
+  try {
+    decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+  } catch (err) {
+    // jwt.verify throws on invalid/expired tokens
+    throw new ApiError(401, "invalid or expired refresh token");
+  }
+
+  const userId = decodedToken?._id || decodedToken?.id; // support both payload shapes
+  if (!userId) throw new ApiError(401, "invalid refresh token payload");
+
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(401, "invalid refresh token");
+
+  // make sure the refresh token matches what we have stored
+  if (user.refreshToken !== incomingRefreshToken)
+    throw new ApiError(401, "refresh token is expired or used");
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          accessToken,
+          refreshToken,
+        },
+        "access token refreshed successfully"
+      )
+    );
 });

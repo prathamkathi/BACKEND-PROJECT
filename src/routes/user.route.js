@@ -33,6 +33,6 @@ userRouter.route("/login").post(loginUser);
 userRouter.route("/logout").post(verifyJWT, logoutUser); // post method is used, and not get
 // http:localhost:3000/api/v1/users/logout
 
-userRouter.route("/refresh-token").post(refreshAccessToken);
+userRouter.route("/refresh-token").post(refreshAccessToken); // hit this endpoint to get tokens refreshed
 
 export default userRouter;

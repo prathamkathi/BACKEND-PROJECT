@@ -15,3 +15,15 @@ const subscriptionSchema = new Schema(
 );
 
 export const Subscription = mongoose.model("Subscription", subscriptionSchema);
+
+/*
+subscription schema working:
+channels: cac, hcc, fcc
+subscribers: a, b, c
+
+this is how we save the documents:
+{ ch: cac, sub: a }, { ch: cac, sub: b }, { ch: cac, sub: c }, { ch: hcc, sub: c }, { ch: fcc, sub: c },
+
+#subscibersOfChannel: count ch
+#subscriptionsOfSubscriber: count sub
+*/

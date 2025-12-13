@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import { asyncHandler } from "./asyncHandler";
 
 dotenv.config();
 
@@ -30,3 +31,7 @@ export const uploadOnCloudinary = async (localFilePath) => {
     return null;
   }
 };
+
+export const removeFromCloudinary = asyncHandler(async (fileUrl) => {
+  // todo:
+});

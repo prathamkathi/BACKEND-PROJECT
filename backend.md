@@ -481,9 +481,16 @@ function asyncHandler(fn) {
 ```js
 // src/utils/asyncHandler.js
 
-// use either of the two below
+// use either of the two below:
 
-// 1. try-catch asyncHandler
+// 1. STANDARD asyncHandler
+const asyncHandler = (requestHandler) => {
+  return (req, res, next) => {
+    Promise.resolve(requestHandler(req, res, next)).catch((err) => next(err));
+  };
+};
+
+// 2. try-catch asyncHandler
 const asyncHandler = (fn) => async (req, res, next) => {
   try {
     await fn(req, res, next);
@@ -495,12 +502,6 @@ const asyncHandler = (fn) => async (req, res, next) => {
   }
 };
 
-// 2. STANDARD asyncHandler
-const asyncHandler = (requestHandler) => {
-  return (req, res, next) => {
-    Promise.resolve(requestHandler(req, res, next)).catch((err) => next(err));
-  };
-};
 export { asyncHandler };
 ```
 
